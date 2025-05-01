@@ -8,7 +8,7 @@ const Book = require('./models/Book');
 const Reservation = require('./models/Reservation');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // 🔧 Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/library_portal', {
