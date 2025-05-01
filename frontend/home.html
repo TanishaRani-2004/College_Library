@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Books</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(to right, #001f3f, #003366);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    form {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #004080;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #002f5f;
+    }
+
+    ul#bookResults {
+      list-style: none;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    ul#bookResults li {
+      background-color: #ffffff;
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    ul#bookResults li strong {
+      font-size: 16px;
+      color: #002147;
+    }
+
+    ul#bookResults li button {
+      margin-top: 10px;
+      background-color: #003366;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Library</h1>
+
+  <form id="searchForm">
+    <input type="text" id="searchQuery" placeholder="Enter book title..." required />
+    <button type="submit">Search</button>
+  </form>
+
+  <ul id="bookResults"></ul>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert("Please login first!");
+      window.location.href = 'login.html';
+    }
+
+    const searchForm = document.getElementById('searchForm');
+    const bookResults = document.getElementById('bookResults');
+
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = document.getElementById('searchQuery').value.toLowerCase();
+
+      const res = await fetch('http://localhost:5000/search');
+      const data = await res.json();
+
+      // Filter books based on search query
+      const filteredBooks = data.books.filter(book =>
+        book.title.toLowerCase().includes(query)
+      );
+
+      bookResults.innerHTML = ''; // Clear previous results
+
+      if (filteredBooks.length === 0) {
+        bookResults.innerHTML = '<li>No matching books found.</li>';
+        return;
+      }
+
+      filteredBooks.forEach(book => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${book.title}</strong> by ${book.author}<br>
+          Available Copies: ${book.copiesAvailable}<br>
+          <button onclick="goToBookPage('${book._id}')">View Details</button>
+        `;
+        bookResults.appendChild(li);
+      });
+    });
+
+    function goToBookPage(bookId) {
+      localStorage.setItem('selectedBookId', bookId);
+      window.location.href = 'book.html';
+    }
+  </script>
+</body>
+</html>

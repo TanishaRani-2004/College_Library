@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Book Info</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color:  #0d1a4a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #0d1a4a;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #0d1a4a;
+    }
+
+    p {
+      font-size: 16px;
+      margin: 10px 0;
+      color: #333;
+    }
+
+    .note {
+      color: green;
+      margin-top: 10px;
+    }
+
+    .unavailable {
+      color: red;
+    }
+
+    #timer {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #0d1a4a;
+    }
+
+    #expiredMsg {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #0d1a4a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1c2e75;
+    }
+
+    button:disabled {
+      background-color: gray;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Book Details</h1>
+
+    <div id="bookInfo"></div>
+    <p id="timer" style="display: none;"></p>
+    <p id="expiredMsg" style="display: none;"></p>
+
+    <button id="reserveBtn" style="display: none;">Reserve This Book</button>
+    <br>
+    <button onclick="goHome()">Back to Home</button>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    const bookId = localStorage.getItem('selectedBookId');
+    const reservationKey = `reservation_${bookId}_${userId}`;
+
+    if (!userId || !bookId) {
+      alert("Missing user or book. Please login and search again.");
+      window.location.href = 'login.html';
+    }
+
+    let currentBook = null;
+    let countdownInterval;
+
+    function goHome() {
+      window.location.href = 'home.html';
+    }
+
+    function startTimer(validUntil) {
+      const timerElement = document.getElementById('timer');
+      timerElement.style.display = 'block';
+
+      function updateTimer() {
+        const now = new Date();
+        const timeLeft = new Date(validUntil) - now;
+
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+          timerElement.style.display = 'none';
+          document.getElementById('expiredMsg').style.display = 'block';
+          document.getElementById('expiredMsg').innerText = 'Reservation expired.';
+          localStorage.removeItem(reservationKey);
+          document.getElementById('reserveBtn').disabled = false;
+          document.getElementById('reserveBtn').innerText = 'Reserve This Book';
+          return;
+        }
+
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        timerElement.innerText = `Time left to pick up: ${minutes}m ${seconds}s`;
+      }
+
+      updateTimer();
+      countdownInterval = setInterval(updateTimer, 1000);
+    }
+
+    async function loadBookInfo() {
+      const res = await fetch('http://localhost:5000/search');
+      const data = await res.json();
+
+      currentBook = data.books.find(book => book._id === bookId);
+      const bookInfoDiv = document.getElementById('bookInfo');
+
+      if (!currentBook) {
+        bookInfoDiv.innerHTML = "<p>Book not found.</p>";
+        return;
+      }
+
+      bookInfoDiv.innerHTML = `
+        <h2>${currentBook.title}</h2>
+        <p><strong>Author:</strong> ${currentBook.author}</p>
+        <p><strong>Available Copies:</strong> ${currentBook.copiesAvailable}</p>
+      `;
+
+      const existingReservation = localStorage.getItem(reservationKey);
+      if (existingReservation) {
+        const validUntil = new Date(existingReservation);
+        const now = new Date();
+
+        if (now < validUntil) {
+          document.getElementById('reserveBtn').disabled = true;
+          document.getElementById('reserveBtn').innerText = 'Reserved';
+          startTimer(validUntil);
+          return;
+        } else {
+          localStorage.removeItem(reservationKey);
+        }
+      }
+
+      if (currentBook.copiesAvailable > 0) {
+        document.getElementById('reserveBtn').style.display = 'inline-block';
+      } else {
+        bookInfoDiv.innerHTML += `<p class="unavailable">No copies available.</p>`;
+      }
+    }
+
+    document.getElementById('reserveBtn').addEventListener('click', async () => {
+      const response = await fetch('http://localhost:5000/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, bookId })
+      });
+
+      const data = await response.json();
+      alert(data.message);
+
+      if (data.reservation) {
+        const validUntil = new Date(data.reservation.validUntil);
+        localStorage.setItem(reservationKey, validUntil.toISOString());
+
+        document.getElementById('reserveBtn').disabled = true;
+        document.getElementById('reserveBtn').innerText = 'Reserved';
+        startTimer(validUntil);
+      }
+    });
+
+    loadBookInfo();
+  </script>
+</body>
+</html>
