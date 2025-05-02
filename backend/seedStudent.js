@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-mongoose.connect('mongodb://localhost:27017/library_portal', {
+mongoose.connect('mongodb+srv://tanisha:tanisharani@librarycluster.mdrindt.mongodb.net/?retryWrites=true&w=majority&appName=LibraryCluster', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(async () => {
