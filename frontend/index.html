@@ -42,7 +42,7 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      const res = await fetch('http://localhost:5000/login', {
+      const res = await fetch('https://library-backend-j1jo.onrender.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -60,7 +60,7 @@
 
     // SEARCH
     async function searchBooks() {
-      const res = await fetch('http://localhost:5000/search');
+      const res = await fetch('https://library-backend-j1jo.onrender.com/search');
       const data = await res.json();
 
       bookList.innerHTML = '';
@@ -81,7 +81,7 @@
       const userId = document.getElementById('reserveUserId').value;
       const bookId = document.getElementById('reserveBookId').value;
 
-      const res = await fetch('http://localhost:5000/reserve', {
+      const res = await fetch('https://library-backend-j1jo.onrender.com/reserve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, bookId })

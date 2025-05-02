@@ -108,7 +108,7 @@
       e.preventDefault();
       const query = document.getElementById('searchQuery').value.toLowerCase();
 
-      const res = await fetch('http://localhost:5000/search');
+      const res = await fetch('https://library-backend-j1jo.onrender.com/search');
       const data = await res.json();
 
       // Filter books based on search query
